@@ -1,0 +1,83 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      # Scaleway provider
+      SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+      SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      SCW_DEFAULT_ORGANIZATION_ID: ${{ secrets.SCW_DEFAULT_ORGANIZATION_ID }}
+      # S3 state backend (Scaleway Object Storage uses the same key pair)
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      # Tofu variables
+      TF_VAR_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
+      TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL }}
+      TF_VAR_custom_domain: ${{ vars.CUSTOM_DOMAIN }}
+      TF_IN_AUTOMATION: "true"
+      IMAGE_TAG: ${{ github.sha }}
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v5
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_wrapper: false
+
+      - name: Init
+        run: tofu init -input=false -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}"
+
+      # The registry must exist before we can push to it (no-op after the first run).
+      - name: Ensure registry exists
+        run: tofu apply -input=false -auto-approve -target=scaleway_registry_namespace.main
+
+      - name: Get registry endpoint
+        id: registry
+        run: echo "endpoint=$(tofu output -raw registry_endpoint)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ steps.registry.outputs.endpoint }}
+          username: nologin
+          password: ${{ secrets.SCW_SECRET_KEY }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.registry.outputs.endpoint }}/library:${{ github.sha }}
+            ${{ steps.registry.outputs.endpoint }}/library:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Apply
+        run: tofu apply -input=false -auto-approve -var="image_tag=${IMAGE_TAG}"
+
+      - name: Summary
+        run: |
+          echo "### Deployed :rocket:" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "App: $(tofu output -raw app_url)" >> "$GITHUB_STEP_SUMMARY"

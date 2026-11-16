@@ -1,0 +1,10 @@
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.vite
+backend/tests
+infra
+.git
+.github
+*.md
