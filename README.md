@@ -8,6 +8,14 @@ A small web app for a household's book collection: browse the shared library, ad
 - **Infrastructure:** OpenTofu
 - **CI/CD:** GitHub Actions
 
+## Live demo
+
+**https://erlendlygre.github.io/library/**
+
+The demo is the real React UI running against an in-browser fake of the API (`frontend/src/api/demo.ts`). Its data is stored in your browser's `localStorage`. Sign in as `admin@demo.local` or `kari@demo.local` (password `demo`). Use **Reset demo data** in the banner to start over.
+
+To build the demo yourself, run `npm run build:demo` in `frontend/`. The production build doesn't include the demo code.
+
 ```
 backend/     .NET solution (src/Library.Api, tests/Library.Api.Tests)
 frontend/    React app

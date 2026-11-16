@@ -57,6 +57,15 @@ a { color: var(--accent); }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
 @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
 
+/* Demo */
+.demo-banner { background: var(--accent); color: var(--accent-text); font-size: 0.85rem; padding: 0.35rem 1rem; display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+.demo-banner .link-button { color: inherit; text-decoration: underline; font-size: inherit; }
+.demo-banner .link-button:hover:not(:disabled) { color: inherit; opacity: 0.85; }
+.demo-accounts { border: 1px dashed var(--border); border-radius: 8px; padding: 0.6rem 0.8rem; }
+.demo-accounts ul { margin: 0.3rem 0 0; padding-left: 1.1rem; }
+.demo-accounts .link-button { color: var(--accent); font-size: inherit; }
+code { font-size: 0.9em; background: var(--border); padding: 0.05rem 0.3rem; border-radius: 4px; }
+
 /* Top bar */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
 .topbar-inner { max-width: 1100px; margin: 0 auto; padding: 0.6rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }

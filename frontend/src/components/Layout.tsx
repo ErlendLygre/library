@@ -1,17 +1,39 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { isDemo } from '../api/client'
+import { resetDemoData } from '../api/demo'
 import { useLogout, useMe } from '../auth'
 
 export default function Layout() {
   const { data: me } = useMe()
   const logout = useLogout()
   const navigate = useNavigate()
+  const qc = useQueryClient()
 
   return (
     <>
+      {isDemo && (
+        <div className="demo-banner">
+          <span>
+            <strong>Demo</strong> · runs entirely in your browser, data is stored locally
+          </span>
+          <button
+            className="link-button"
+            onClick={() => {
+              if (!confirm('Reset all demo data to the original sample library?')) return
+              resetDemoData()
+              qc.invalidateQueries()
+              navigate('/')
+            }}
+          >
+            Reset demo data
+          </button>
+        </div>
+      )}
       <header className="topbar">
         <div className="topbar-inner">
           <Link to="/" className="brand">
-            <img src="/favicon.svg" alt="" width={24} height={24} />
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width={24} height={24} />
             Home Library
           </Link>
           <nav className="nav">
